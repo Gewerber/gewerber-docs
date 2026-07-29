@@ -53,11 +53,7 @@ Gewerber uses a **single‑language Dart stack**:
 - `document_endpoint.dart`
 
 #### 🔒 Closed Endpoints
-- `banking_endpoint.dart`
-- `tax_endpoint.dart`
-- `employees_endpoint.dart`
-- `subscription_endpoint.dart`
-- `ai_endpoint.dart`
+Closed modules (banking, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in private repositories and are not part of the public codebase.
 
 ---
 
@@ -74,11 +70,7 @@ Gewerber uses a **single‑language Dart stack**:
 - Document
 
 #### 🔒 Entities (Closed)
-- Subscription
-- BankAccount
-- Transaction
-- Employee
-- PayrollRecord
+Data models for closed modules live in private repositories and are not part of the public schema.
 
 ---
 
@@ -137,24 +129,12 @@ Gewerber uses a **single‑language Dart stack**:
 ---
 
 ### 3.5 Banking Module
-**🔒 Closed**
-- PSD2 banking API integration
-- Automatic transaction import
-- Categorization rules
-- Reconciliation with invoices
-- Multi-bank support
-- Multi-currency accounts
+**🔒 Closed** — PSD2 banking integration, transaction import, and reconciliation. Implemented in a private repository; see the [Roadmap](ROADMAP.md) for the public overview.
 
 ---
 
 ### 3.6 Employees Module
-**🔒 Closed**
-- Employee profiles
-- Time tracking per employee
-- Payroll export
-- Vacation & sick leave tracking
-- Mini-job / Midijob support
-- Permissions & roles
+**🔒 Closed** — employee profiles, per-employee time tracking, and payroll export. Implemented in a private repository; see the [Roadmap](ROADMAP.md) for the public overview.
 
 ---
 

@@ -4,6 +4,8 @@ A long-term development plan for the Gewerber open-core platform.
 
 The roadmap is divided into an **Open Source (OSS)** track — focused on core functionality, community adoption, and transparency — and a **Commercial** track for advanced modules.
 
+> This is the **public, community-facing** roadmap and the source of truth for OSS deliverables. Internal business timelines and commercial strategy are maintained privately and are not published here.
+
 ---
 
 ## 🌟 Vision
