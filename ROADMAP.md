@@ -8,6 +8,14 @@ The roadmap is divided into an **Open Source (OSS)** track — focused on core f
 
 ---
 
+## ✅ Current Status
+
+- **Phase 1 / Invoicing Core (backend)** — implemented in `gewerber-backend-core`: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic, GoBD-compliant invoice numbering, invoice templates, payment recording & status (`paid`/`partiallyPaid`), recurring invoices, reminders model, migration and integration tests.
+- **Phase 1 / Core Platform (backend)** — Serverpod backend running with auth (JWT), business profile, and multi-tenancy (tenant resolver).
+- **Commercial modules** — `gewerber-backend-commercial` repository scaffolded as a Serverpod module (`commercial` nickname) with placeholder areas for banking (PSD2), tax (ELSTER), and advanced accounting. No commercial business logic implemented yet.
+
+---
+
 ## 🌟 Vision
 
 Gewerber aims to become the most friendly, modern, and modular platform for Einzelunternehmer, Kleingewerbe, and micro‑business owners in Germany.
@@ -48,19 +56,22 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 ### 🌐 Open Source Deliverables
 
 #### 🏗 Core Platform
-- Serverpod backend skeleton
+- Serverpod backend skeleton ✅
 - Flutter Web app at `https://app.gewerber.de`
 - Jaspr marketing site at `https://gewerber.de`
 - Multi‑language (EN/RU/DE)
-- Basic auth & business profile
+- Basic auth & business profile ✅ (JWT auth, business profile, multi-tenancy)
 
 #### 💰 Invoicing Core
-- Invoice creation
+- Invoice creation ✅
 - PDF generation
-- Kleinunternehmer §19 logic
-- VAT logic
+- Kleinunternehmer §19 logic ✅
+- VAT logic ✅ (standard/reduced, reverse charge, zero)
 - CSV/JSON export
-- Invoice templates
+- Invoice templates ✅
+- Recurring invoices ✅
+- Payment recording & status ✅
+- Reminders (model) ✅
 
 #### ⏱ Time Tracking Core
 - Projects & tasks

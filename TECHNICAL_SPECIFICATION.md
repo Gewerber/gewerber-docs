@@ -44,16 +44,19 @@ Gewerber uses a **single‑language Dart stack**:
 ### 2.2 Backend (Serverpod)
 
 #### 🌐 Open Source Endpoints
-- `auth_endpoint.dart`
-- `business_endpoint.dart`
-- `invoice_endpoint.dart`
-- `time_endpoint.dart`
-- `accounting_endpoint.dart`
-- `guidance_endpoint.dart`
-- `document_endpoint.dart`
+- `auth` — JWT email/password sign-in, refresh
+- `business` — business profile & settings (multi-tenant)
+- `customer` — customer CRUD
+- `invoice` — invoice CRUD, items, status (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`)
+- `invoiceTemplate` — reusable invoice templates
+- `payment` — payment recording & payment status
+- `document` — document upload
+- `entitlement` — subscription feature gating
+
+Future OSS modules (time tracking, basic accounting, guidance) will add `time`, `accounting`, and `guidance` endpoints.
 
 #### 🔒 Closed Endpoints
-Closed modules (banking, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in private repositories and are not part of the public codebase.
+Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Only a placeholder `commercial.status` health endpoint exists so far.
 
 ---
 
@@ -62,11 +65,13 @@ Closed modules (banking, tax/ELSTER, employees, subscriptions, AI assistant) are
 #### 🌐 Entities (Open Source)
 - User
 - Business
+- BusinessSettings
 - Invoice
-- Client
-- TimeEntry
-- Project
-- Expense
+- InvoiceItem
+- InvoiceTemplate
+- PaymentRecord
+- Customer
+- Reminder
 - Document
 
 #### 🔒 Entities (Closed)
@@ -86,12 +91,14 @@ Data models for closed modules live in private repositories and are not part of 
 
 ### 3.2 Invoicing Module
 
-#### 🌐 Open Source
-- Invoice creation
+#### 🌐 Open Source (implemented in `gewerber-backend-core`)
+- Invoice creation ✅
 - PDF generation
-- VAT/Kleinunternehmer logic
-- Recurring invoices
-- Reminders
+- VAT/Kleinunternehmer §19 logic ✅
+- Recurring invoices ✅
+- Reminders (model) ✅
+- Invoice templates ✅
+- Payment recording & status ✅
 - Export
 
 #### 🔒 Closed
@@ -129,12 +136,12 @@ Data models for closed modules live in private repositories and are not part of 
 ---
 
 ### 3.5 Banking Module
-**🔒 Closed** — PSD2 banking integration, transaction import, and reconciliation. Implemented in a private repository; see the [Roadmap](ROADMAP.md) for the public overview.
+**🔒 Closed** — PSD2 banking integration, transaction import, and reconciliation. Implemented in the private `gewerber-backend-commercial` repository; see the [Roadmap](ROADMAP.md) for the public overview.
 
 ---
 
 ### 3.6 Employees Module
-**🔒 Closed** — employee profiles, per-employee time tracking, and payroll export. Implemented in a private repository; see the [Roadmap](ROADMAP.md) for the public overview.
+**🔒 Closed** — employee profiles, per-employee time tracking, and payroll export. Implemented in the private `gewerber-backend-commercial` repository; see the [Roadmap](ROADMAP.md) for the public overview.
 
 ---
 
