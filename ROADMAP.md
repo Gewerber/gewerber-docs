@@ -11,11 +11,12 @@ The roadmap is divided into an **Open Source (OSS)** track — focused on core f
 ## ✅ Current Status
 
 - **Phase 1 / Core Platform (backend)** — done in `gewerber-backend-core`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
-- **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders with scheduled background jobs (materialize recurring, mark overdue), CSV/JSON export.
+- **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders with scheduled background jobs (materialize recurring, mark overdue, send reminder emails via SMTP), CSV/JSON export.
 - **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
 - **Phase 1 / Guidance System (backend)** — done: tips, checklists and per-user progress.
-- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard, auth & onboarding and settings are in place; invoicing, time tracking, accounting and guidance are wired to the backend (module UIs are being built out).
+- **Backend audit & GDPR hardening (2026‑08)** — passed a full security and quality audit: ownership checks on all business resources, invoice status guards, transactional payment recording with audit trail, upload validation, pagination caps and query optimizations. GDPR self-service shipped: account deletion with anonymization (Art. 17) and full data export (Art. 20).
+- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard, auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization.
 - **Marketing site (`gewerber-website`)** — Jaspr SSR site live at `https://gewerber.de` with blog, FAQ, pricing and this roadmap.
 - **Commercial modules** — `gewerber-backend-commercial` repository scaffolded as a Serverpod module (`commercial` nickname) with a public waitlist; placeholder areas for banking (PSD2), tax (ELSTER) and advanced accounting. No commercial business logic implemented yet.
 
@@ -76,7 +77,7 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 - Invoice templates ✅
 - Recurring invoices ✅
 - Payment recording & status ✅
-- Reminders (model) ✅
+- Reminders ✅ (scheduled sending via SMTP)
 
 #### ⏱ Time Tracking Core
 - Projects & tasks ✅
@@ -95,7 +96,7 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 - Tooltips ✅
 - Checklists ✅
 - **"What is this?"** popups
-- Blog integration
+- Blog integration (planned)
 
 #### 🎨 UI Kit
 - Forms
@@ -112,7 +113,10 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 
 ### 🌐 Open Source Deliverables
 - More invoice templates and accounting categories
-- E-invoicing support (XRechnung/ZUGFeRD)
+- Membership management (invite/remove members, roles)
+- Automatic dunning (Mahnung)
+- Korrekturrechnung / credit notes
+- E-invoicing support (XRechnung/ZUGFeRD) — B2B receiving already mandatory, issuing phased in 2027–2028 (mandatory from 2027 for businesses with annual revenue above €800,000; from 2028 for all)
 - Time tracking analytics
 - Multi‑business support (OSS)
 - Community plugin system

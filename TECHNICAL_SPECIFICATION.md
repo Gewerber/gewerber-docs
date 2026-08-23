@@ -13,7 +13,7 @@ Gewerber uses a **single‑language Dart stack**:
 - **Mobile/Desktop:** Flutter
 - **Marketing Site:** Jaspr (`https://gewerber.de`)
 - **Database:** PostgreSQL
-- **Storage:** S3-compatible
+- **Storage:** Database-backed document storage (S3-compatible storage planned)
 - **Open Core:** OSS modules
 - **Closed Modules:** banking, tax/ELSTER, employees, subscriptions, AI assistant
 
@@ -31,12 +31,12 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Flutter Web (Application)
 - Hosted at `https://app.gewerber.de`
 - Modular UI packages
-- Offline support
+- Offline support *(planned)*
 - Responsive design
 
 #### 📱 Flutter Mobile/Desktop
 - Shared codebase
-- Local persistence (Isar/Hive)
+- Local persistence (Isar/Hive) *(planned)*
 - Background timer service
 
 ---
@@ -44,16 +44,33 @@ Gewerber uses a **single‑language Dart stack**:
 ### 2.2 Backend (Serverpod)
 
 #### 🌐 Open Source Endpoints
-- `auth` — JWT email/password sign-in, refresh
-- `business` — business profile & settings (multi-tenant)
-- `customer` — customer CRUD
-- `invoice` — invoice CRUD, items, status (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`)
-- `invoiceTemplate` — reusable invoice templates
-- `payment` — payment recording & payment status
-- `document` — document upload
+
+*Core platform & user*
+- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes)
+- `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
-Future OSS modules (time tracking, basic accounting, guidance) will add `time`, `accounting`, and `guidance` endpoints.
+*Invoicing*
+- `customer` — customer CRUD with offset-based (`listPage`, incl. total count) and keyset cursor (`listCursorPage`) pagination
+- `invoice` — invoice CRUD, items, status workflow (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`; draft-only editing, deletion restricted to drafts/cancelled), PDF generation, CSV/JSON export, same pagination options
+- `invoiceTemplate` — reusable invoice templates (editor + invoice prefill)
+- `payment` — payment recording & payment status (transactional, overpayments rejected)
+- `recurringSchedule` — create/get/list/update/cancel recurring invoice schedules
+- `reminder` — reminders with scheduled sending via SMTP
+- `document` — document upload (MIME type & extension whitelist)
+
+*Time tracking*
+- `project` / `task` / `timeEntry` — projects & tasks, timer, manual entries, rounding rules, reports; time-to-invoice via `timeEntry.createInvoice` (whole project or selected entries)
+
+*Accounting*
+- `accounting` — income/expense transactions (editable), categories, receipt upload, P&L report, CSV export
+
+*Guidance*
+- `guidance` — tips, checklists and per-user progress
+
+*GDPR self-service*
+- `userProfile.deleteMyAccount` — account deletion with anonymization of personal references (GDPR Art. 17)
+- `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
 #### 🔒 Closed Endpoints
 Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Only a placeholder `commercial.status` health endpoint exists so far.
@@ -66,13 +83,16 @@ Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant
 - User
 - Business
 - BusinessSettings
-- Invoice
+- Invoice *(recurring schedules are modelled as fields on the invoice)*
 - InvoiceItem
 - InvoiceTemplate
 - PaymentRecord
 - Customer
 - Reminder
 - Document
+- Project / Task / TimeEntry
+- AccountingTransaction
+- UserGuidanceProgress
 
 #### 🔒 Entities (Closed)
 Data models for closed modules live in private repositories and are not part of the public schema.
@@ -93,13 +113,14 @@ Data models for closed modules live in private repositories and are not part of 
 
 #### 🌐 Open Source (implemented in `gewerber-backend-core`)
 - Invoice creation ✅
-- PDF generation
+- PDF generation ✅
 - VAT/Kleinunternehmer §19 logic ✅
 - Recurring invoices ✅
-- Reminders (model) ✅
+- Reminders ✅ (scheduled sending via SMTP)
 - Invoice templates ✅
 - Payment recording & status ✅
-- Export
+- CSV/JSON export ✅
+- Pagination (offset & keyset cursor) ✅
 
 #### 🔒 Closed
 - Online payments (Stripe)
@@ -148,10 +169,11 @@ Data models for closed modules live in private repositories and are not part of 
 ### 3.7 Guidance Module
 
 #### 🌐 Open Source
-- Tooltips
-- Checklists
-- Blog
-- Tutorials
+- Tooltips ✅
+- Checklists ✅
+- **"What is this?"** popups *(planned)*
+- Blog integration *(planned)*
+- Tutorials *(planned)*
 
 #### 🔒 Closed
 - AI assistant
@@ -160,12 +182,27 @@ Data models for closed modules live in private repositories and are not part of 
 
 ---
 
+### 3.8 E-Invoicing (E-Rechnung) — Planned OSS Feature
+
+Structured e-invoicing is being phased in for German B2B by law: businesses must already be able to **receive** structured e-invoices, while the obligation to **issue** them applies from 2027–2028 depending on prior-year turnover.
+
+Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invoicing module, built on the existing invoice data model (items, VAT rates, Kleinunternehmer §19 handling), so self-hosted users can stay compliant without a commercial tier.
+
+- Planned deliverable: standards-compliant export (XRechnung CII, ZUGFeRD hybrid PDF/XML) from invoices created in Gewerber
+- Timeline aligned with the statutory issuing deadlines (2027–2028); see the [Roadmap](ROADMAP.md) (Phase 2)
+- E-invoice receiving/validation and tax-filing integrations are out of scope for the OSS core (see closed modules)
+
+---
+
 ## 4️⃣ Security
 - JWT auth
-- Encrypted fields
-- GDPR compliance
-- Audit logs
+- Resource ownership checks on all business data (IDOR protection)
+- Invoice status guards (draft-only editing, restricted deletion)
+- Upload validation (MIME type & extension whitelist)
+- GDPR compliance — self-service account deletion with anonymization (Art. 17) and full data export (Art. 20)
+- Audit logs written transactionally alongside the business changes they record
 - Role‑based access control
+- Encrypted fields *(planned)*
 
 ---
 
