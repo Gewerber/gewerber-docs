@@ -10,9 +10,14 @@ The roadmap is divided into an **Open Source (OSS)** track — focused on core f
 
 ## ✅ Current Status
 
-- **Phase 1 / Invoicing Core (backend)** — implemented in `gewerber-backend-core`: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic, GoBD-compliant invoice numbering, invoice templates, payment recording & status (`paid`/`partiallyPaid`), recurring invoices, reminders model, migration and integration tests.
-- **Phase 1 / Core Platform (backend)** — Serverpod backend running with auth (JWT), business profile, and multi-tenancy (tenant resolver).
-- **Commercial modules** — `gewerber-backend-commercial` repository scaffolded as a Serverpod module (`commercial` nickname) with placeholder areas for banking (PSD2), tax (ELSTER), and advanced accounting. No commercial business logic implemented yet.
+- **Phase 1 / Core Platform (backend)** — done in `gewerber-backend-core`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
+- **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders with scheduled background jobs (materialize recurring, mark overdue), CSV/JSON export.
+- **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
+- **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
+- **Phase 1 / Guidance System (backend)** — done: tips, checklists and per-user progress.
+- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard, auth & onboarding and settings are in place; invoicing, time tracking, accounting and guidance are wired to the backend (module UIs are being built out).
+- **Marketing site (`gewerber-website`)** — Jaspr SSR site live at `https://gewerber.de` with blog, FAQ, pricing and this roadmap.
+- **Commercial modules** — `gewerber-backend-commercial` repository scaffolded as a Serverpod module (`commercial` nickname) with a public waitlist; placeholder areas for banking (PSD2), tax (ELSTER) and advanced accounting. No commercial business logic implemented yet.
 
 ---
 
@@ -57,38 +62,38 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 
 #### 🏗 Core Platform
 - Serverpod backend skeleton ✅
-- Flutter Web app at `https://app.gewerber.de`
-- Jaspr marketing site at `https://gewerber.de`
-- Multi‑language (EN/RU/DE)
+- Flutter Web app at `https://app.gewerber.de` ✅
+- Jaspr marketing site at `https://gewerber.de` ✅
+- Multi-language UI (DE/EN/RU/TR) ✅
 - Basic auth & business profile ✅ (JWT auth, business profile, multi-tenancy)
 
 #### 💰 Invoicing Core
 - Invoice creation ✅
-- PDF generation
+- PDF generation ✅
 - Kleinunternehmer §19 logic ✅
 - VAT logic ✅ (standard/reduced, reverse charge, zero)
-- CSV/JSON export
+- CSV/JSON export ✅
 - Invoice templates ✅
 - Recurring invoices ✅
 - Payment recording & status ✅
 - Reminders (model) ✅
 
 #### ⏱ Time Tracking Core
-- Projects & tasks
-- Timer
-- Manual entries
-- Rounding rules
-- Reports
+- Projects & tasks ✅
+- Timer ✅
+- Manual entries ✅
+- Rounding rules ✅
+- Reports ✅
 
 #### 📊 Basic Accounting Core
-- Income & expense tracking
-- Receipt upload
-- Categorization
-- Basic P&L
+- Income & expense tracking ✅
+- Receipt upload ✅
+- Categorization ✅
+- Basic P&L ✅
 
 #### 📖 Guidance System
-- Tooltips
-- Checklists
+- Tooltips ✅
+- Checklists ✅
 - **"What is this?"** popups
 - Blog integration
 
@@ -107,6 +112,7 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 
 ### 🌐 Open Source Deliverables
 - More invoice templates and accounting categories
+- E-invoicing support (XRechnung/ZUGFeRD)
 - Time tracking analytics
 - Multi‑business support (OSS)
 - Community plugin system
