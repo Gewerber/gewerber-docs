@@ -73,7 +73,7 @@ Gewerber uses a **single‑language Dart stack**:
 - `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
 #### 🔒 Closed Endpoints
-Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Only a placeholder `commercial.status` health endpoint exists so far.
+Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: a placeholder `commercial.status` health endpoint and the public `waitlist.join` endpoint used by the marketing site. OSS builds resolve the module against the public stub packages in `gewerber-backend--stubs` (identical API surface, no business logic); the real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository.
 
 ---
 
@@ -111,7 +111,7 @@ Data models for closed modules live in private repositories and are not part of 
 
 ### 3.2 Invoicing Module
 
-#### 🌐 Open Source (implemented in `gewerber-backend-core`)
+#### 🌐 Open Source (implemented in `gewerber-backend`)
 - Invoice creation ✅
 - PDF generation ✅
 - VAT/Kleinunternehmer §19 logic ✅

@@ -10,7 +10,7 @@ The roadmap is divided into an **Open Source (OSS)** track — focused on core f
 
 ## ✅ Current Status
 
-- **Phase 1 / Core Platform (backend)** — done in `gewerber-backend-core`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
+- **Phase 1 / Core Platform (backend)** — done in `gewerber-backend`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
 - **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders with scheduled background jobs (materialize recurring, mark overdue, send reminder emails via SMTP), CSV/JSON export.
 - **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
