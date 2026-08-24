@@ -111,7 +111,7 @@ Data models for closed modules live in private repositories and are not part of 
 
 ### 3.2 Invoicing Module
 
-#### 🌐 Open Source (implemented in `gewerber-backend-core`)
+#### 🌐 Open Source (implemented in `gewerber-backend`)
 - Invoice creation ✅
 - PDF generation ✅
 - VAT/Kleinunternehmer §19 logic ✅
