@@ -65,6 +65,9 @@ Gewerber uses a **single‑language Dart stack**:
 *Accounting*
 - `accounting` — income/expense transactions (editable), categories, receipt upload, P&L report, CSV export
 
+*Dashboard*
+- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, credit notes excluded (compensation is a planned follow-up), open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
+
 *Guidance*
 - `guidance` — tips, checklists and per-user progress
 
@@ -93,6 +96,7 @@ Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant
 - Project / Task / TimeEntry
 - AccountingTransaction
 - UserGuidanceProgress
+- Dashboard *(read-only summary DTOs, no database tables)*: DashboardSummary, MonthlyTrendPoint, DashboardKpis, RecentTimeEntry, ReceivablesSummary, DebtorSummary
 
 #### 🔒 Entities (Closed)
 Data models for closed modules live in private repositories and are not part of the public schema.
