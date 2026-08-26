@@ -46,7 +46,7 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Open Source Endpoints
 
 *Core platform & user*
-- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes)
+- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships; consumed by the `gewerber-mcp` user mode)
 - `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
@@ -73,14 +73,14 @@ Gewerber uses a **single‑language Dart stack**:
 - `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
 *Administration*
-- `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface for the private `gewerber-mcp` AI agent (see Admin API below)
+- `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface consumed by the open-source `gewerber-mcp` integration tooling (see Admin API below)
 
 #### 🔒 Closed Endpoints
 Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: a placeholder `commercial.status` health endpoint and the public `waitlist.join` endpoint used by the marketing site. OSS builds resolve the module against the public stub packages in `gewerber-backend--stubs` (identical API surface, no business logic); the real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository.
 
 #### 🛡️ Admin API
 
-The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed exclusively by the private [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server, an AI-agent-driven replacement for a classic admin panel. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
+The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed by the open-source [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server — an MCP integration surface positioned as open integration tooling (**not** an AI assistant) that serves platform staff through these admin endpoints and end users through a separate per-user tool mode. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
 
 *Role model*
 - Global `admin_user` allowlist table with two roles: `moderator` (read-only) < `admin` (may mutate).
