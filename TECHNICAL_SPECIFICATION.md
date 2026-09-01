@@ -46,7 +46,7 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Open Source Endpoints
 
 *Core platform & user*
-- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes)
+- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships; consumed by the `gewerber-mcp` user mode)
 - `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
@@ -65,6 +65,9 @@ Gewerber uses a **single‑language Dart stack**:
 *Accounting*
 - `accounting` — income/expense transactions (editable), categories, receipt upload, P&L report, CSV export
 
+*Dashboard*
+- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, credit notes excluded (compensation is a planned follow-up), open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
+
 *Guidance*
 - `guidance` — tips, checklists and per-user progress
 
@@ -73,14 +76,14 @@ Gewerber uses a **single‑language Dart stack**:
 - `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
 *Administration*
-- `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface for the private `gewerber-mcp` AI agent (see Admin API below)
+- `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface consumed by the open-source `gewerber-mcp` integration tooling (see Admin API below)
 
 #### 🔒 Closed Endpoints
 Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: a placeholder `commercial.status` health endpoint and the public `waitlist.join` endpoint used by the marketing site. OSS builds resolve the module against the public stub packages in `gewerber-backend--stubs` (identical API surface, no business logic); the real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository.
 
 #### 🛡️ Admin API
 
-The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed exclusively by the private [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server, an AI-agent-driven replacement for a classic admin panel. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
+The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed by the open-source [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server — an MCP integration surface positioned as open integration tooling (**not** an AI assistant) that serves platform staff through these admin endpoints and end users through a separate per-user tool mode. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
 
 *Role model*
 - Global `admin_user` allowlist table with two roles: `moderator` (read-only) < `admin` (may mutate).
@@ -139,6 +142,7 @@ All mutations require the explicit `confirm: true` flag (missing/false → typed
 - Project / Task / TimeEntry
 - AccountingTransaction
 - UserGuidanceProgress
+- Dashboard *(read-only summary DTOs, no database tables)*: DashboardSummary, MonthlyTrendPoint, DashboardKpis, RecentTimeEntry, ReceivablesSummary, DebtorSummary
 
 #### 🔒 Entities (Closed)
 Data models for closed modules live in private repositories and are not part of the public schema.
