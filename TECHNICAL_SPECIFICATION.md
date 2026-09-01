@@ -46,7 +46,7 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Open Source Endpoints
 
 *Core platform & user*
-- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes)
+- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships; consumed by the `gewerber-mcp` user mode)
 - `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
@@ -75,8 +75,54 @@ Gewerber uses a **single‑language Dart stack**:
 - `userProfile.deleteMyAccount` — account deletion with anonymization of personal references (GDPR Art. 17)
 - `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
+*Administration*
+- `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface consumed by the open-source `gewerber-mcp` integration tooling (see Admin API below)
+
 #### 🔒 Closed Endpoints
 Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: a placeholder `commercial.status` health endpoint and the public `waitlist.join` endpoint used by the marketing site. OSS builds resolve the module against the public stub packages in `gewerber-backend--stubs` (identical API surface, no business logic); the real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository.
+
+#### 🛡️ Admin API
+
+The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed by the open-source [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server — an MCP integration surface positioned as open integration tooling (**not** an AI assistant) that serves platform staff through these admin endpoints and end users through a separate per-user tool mode. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
+
+*Role model*
+- Global `admin_user` allowlist table with two roles: `moderator` (read-only) < `admin` (may mutate).
+- The caller's role is resolved from the database on **every request** (`AdminRoleResolver` behind the shared `AdminEndpoint.requireAdmin` base guard); unauthenticated, non-admin or below-minimum-role calls fail with a typed `ForbiddenException` — revocation therefore takes effect immediately.
+- Role management is out-of-band by design: since only admins could manage admins through the API, the first role is bootstrapped with [`grant_admin.sql`](https://github.com/Gewerber/gewerber-backend/blob/main/gewerber_backend_server/tool/grant_admin.sql) — registered users only, upsert per user (re-running promotes/demotes), default role `moderator`, audited as `admin.roleGranted` / `admin.roleChanged` with actor NULL. There are no grant/revoke endpoints.
+
+*Endpoints*
+
+| Endpoint | Method | Key parameters | Min role |
+|---|---|---|---|
+| `adminStats` | `statsOverview` | platform-wide counters | moderator |
+| `adminUsers` | `usersSearch` | `query` (email substring), `limit`, `cursor` | moderator |
+| | `usersGet` | `userId` — full dossier (profile, memberships, auth status) | moderator |
+| | `usersVerifyEmail` | `userId` — read-only verification-state compliance check (audited) | admin |
+| | `usersBan` | `userId`, required `reason`, **`confirm`** | admin |
+| | `usersUnban` | `userId`, **`confirm`** | admin |
+| `adminBusinesses` | `businessesSearch` | `query` (name substring), `limit`, `cursor` | moderator |
+| | `businessesGet` | `businessId` — incl. all memberships | moderator |
+| | `membershipsSetRole` | `membershipId`, `role`, **`confirm`** | admin |
+| `adminInvoices` | `invoicesList` | optional filters `businessId`, `status`, inclusive date range `from`/`to`; `limit`, `cursor` | moderator |
+| | `invoicesGet` | `invoiceId` | moderator |
+| | `invoiceCancelAdmin` | `invoiceId`, required `reason`, **`confirm`** | admin |
+| `adminAudit` | `auditQuery` | optional `actorUserId`, exact-match `action`, `since`, `limit` | moderator |
+| `adminGuidance` | `guidanceTipsList` | effective tips (curated content + admin overrides) | moderator |
+| | `guidanceTipUpsert` | unique `topic`, `title`, `body`, **`confirm`** | admin |
+
+All mutations require the explicit `confirm: true` flag (missing/false → typed `ValidationException`); bans and invoice cancellation additionally require a non-empty `reason`, which is stored in the audit trail. `invoiceCancelAdmin` cancels only open invoices (`sent`/`partiallyPaid`/`overdue`) — drafts belong to their owners and paid invoices are immutable (GoBD), so both are rejected.
+
+*Safety guarantees*
+- **Confirm guard** — destructive methods take an explicit `confirm` parameter; the MCP client must send `confirm: true` deliberately.
+- **Transactional auditing** — mutations record an `audit_entry` row transactionally alongside the change they describe, always with action prefix `admin.*` and the acting admin as actor.
+- **Atomic last-owner guard** — demoting the last owner of a business is refused (typed conflict error).
+- **Bans are reversible flags** — banning blocks the user on the auth level (`AuthUser.blocked`) and purges refresh tokens immediately; no user data is deleted, and unban restores sign-in.
+- **Typed errors** — failures throw generated serializable exceptions (`NotFound`, `Validation`, `Forbidden`, `Conflict`) that clients catch by type.
+- **Keyset pagination** — search/list methods use opaque cursors, default limit 50 and hard cap 200 rows per page; `auditQuery` pages newest-first via the `since` timestamp of the oldest returned entry.
+
+*Known limitations*
+- Access JWTs issued before a ban remain valid until they expire; refresh tokens are revoked, so affected sessions cannot be renewed.
+- Ban/unban side effects live in the auth module: block flag, token purge/connection revocation and the audit entry commit separately rather than in one cross-module transaction — documented residual risk.
 
 ---
 
