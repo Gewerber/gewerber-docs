@@ -2,7 +2,7 @@
 
 A long-term development plan for the Gewerber open-core platform.
 
-The roadmap is divided into an **Open Source (OSS)** track — focused on core functionality, community adoption, and transparency — and a **Commercial** track for advanced modules.
+The roadmap covers the **Open Source (OSS)** track — core functionality, community adoption, and transparency.
 
 > This is the **public, community-facing** roadmap and the source of truth for OSS deliverables. Internal business timelines and commercial strategy are maintained privately and are not published here.
 
@@ -16,12 +16,9 @@ The roadmap is divided into an **Open Source (OSS)** track — focused on core f
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
 - **Phase 1 / Guidance System (backend)** — done: tips, checklists and per-user progress.
 - **Backend audit & GDPR hardening (2026‑08)** — passed a full security and quality audit: ownership checks on all business resources, invoice status guards, transactional payment recording with audit trail, upload validation, pagination caps and query optimizations. GDPR self-service shipped: account deletion with anonymization (Art. 17) and full data export (Art. 20).
-- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (KPIs, monthly trends, recent activity and receivables via the server-side `dashboard.getSummary` endpoint), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization.
-- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (v2), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization. Android Play Store internal testing is prepared.
+- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (v2: KPIs, monthly trends, recent activity and receivables via the server-side `dashboard.getSummary` endpoint), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization. Android Play Store internal testing is prepared.
 - **Marketing site (`gewerber-website`)** — Jaspr SSR site live at `https://gewerber.de` with blog, FAQ, pricing and this roadmap.
 - **Open-core restructure (2026‑08)** — complete: OSS builds resolve the commercial Serverpod module against the public placeholder packages in `gewerber-backend-stubs`; insiders override locally via gitignored `pubspec_overrides.yaml`, and release CI/Docker injects the real private module with a token.
-- **Commercial modules** — `gewerber-backend-commercial` repository scaffolded as a Serverpod module (`commercial` nickname) with a public waitlist; placeholder areas for banking (PSD2), tax (ELSTER) and advanced accounting. No commercial business logic implemented yet.
-
 ---
 
 ## 🌟 Vision
@@ -51,7 +48,7 @@ The long-term vision includes:
 
 ## 📊 Roadmap Overview
 
-The roadmap is divided into three phases. Each phase contains both OSS and Commercial tracks.
+The roadmap is divided into three phases of open-source deliverables.
 
 - **Phase 1** — OSS Core + MVP SaaS
 - **Phase 2** — Growth & Commercial Modules
@@ -106,9 +103,6 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 - Cards
 - Layouts
 
-### 🔒 Commercial Track
-- Subscription system (Stripe, feature gating, Pro/Business tiers)
-
 ---
 
 ## 🟡 Phase 2 — Growth & Commercial Modules
@@ -125,12 +119,6 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 - CLI tools and plugin architecture
 - Improved documentation and example deployments
 
-### 🔒 Commercial Track
-- Banking module (PSD2, transaction import, reconciliation)
-- Advanced accounting (VAT reporting, depreciation, ELSTER export)
-- Mobile apps (iOS, Android)
-- Chrome extension
-
 ---
 
 ## 🔵 Phase 3 — Expansion & Automation
@@ -140,12 +128,6 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 - Custom invoice templates
 - Community-driven modules and localization
 - Plugin marketplace (OSS)
-
-### 🔒 Commercial Track
-- Employees & payroll
-- AI assistant
-- Full ELSTER integration
-- International expansion
 
 ---
 
@@ -170,7 +152,6 @@ The roadmap is divided into three phases. Each phase contains both OSS and Comme
 ## 🔢 Versioning Strategy
 
 - **OSS Core:** Semantic Versioning (SemVer)
-- **Commercial Modules:** SaaS versioning (feature-based)
 - **Breaking changes:** documented via migration guides
 
 ---
