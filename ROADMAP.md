@@ -112,7 +112,7 @@ The roadmap is divided into three phases of open-source deliverables.
 - Membership management (invite/remove members, roles)
 - Automatic dunning (Mahnung)
 - Korrekturrechnung / credit notes
-- E-invoicing support (XRechnung/ZUGFeRD) — receiving structured e-invoices already mandatory; issuing obligation from 2027 for businesses whose **prior-year total turnover** exceeded €800,000, from 2028 for all (Kleinunternehmer and invoices ≤ €250 exempt); accepted formats are EN 16931-conformant (XRechnung, ZUGFeRD, Peppol-BIS/Factur-X)
+- E-invoicing support (XRechnung/ZUGFeRD) — receiving structured e-invoices already mandatory; issuing obligation from 2027 for businesses whose **prior-year total turnover** exceeded €800,000, from 2028 for all (exemptions: Kleinunternehmer under §19 UStG, invoices ≤ €250 under §34a UStDV); accepted formats must be **EN 16931**-conformant — XRechnung and ZUGFeRD are the common German syntaxes, Peppol-BIS and Factur-X are also accepted
 - Time tracking analytics
 - Multi‑business support (OSS)
 - Community plugin system
