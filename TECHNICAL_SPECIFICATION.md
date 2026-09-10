@@ -250,7 +250,7 @@ Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invo
 - Invoice status guards (draft-only editing, restricted deletion)
 - Upload validation (MIME type & extension whitelist)
 - GDPR compliance — self-service account deletion with anonymization (Art. 17) and full data export (Art. 20)
-- Audit logs written transactionally alongside the business changes they record
+- Audit entries recorded for every admin mutation — transactional where feasible (see Admin API safety guarantees)
 - Role‑based access control
 - Encrypted fields *(planned)*
 
