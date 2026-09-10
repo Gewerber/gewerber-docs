@@ -11,12 +11,12 @@ The roadmap covers the **Open Source (OSS)** track — core functionality, commu
 ## ✅ Current Status
 
 - **Phase 1 / Core Platform (backend)** — done in `gewerber-backend`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
-- **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders with scheduled background jobs (materialize recurring, mark overdue, send reminder emails via SMTP), CSV/JSON export.
+- **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders (background jobs materialize recurring invoices and mark overdue; reminder emails sent on demand via SMTP), CSV/JSON export.
 - **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
 - **Phase 1 / Guidance System (backend)** — done: tips, checklists and per-user progress.
 - **Backend audit & GDPR hardening (2026‑08)** — passed a full security and quality audit: ownership checks on all business resources, invoice status guards, transactional payment recording with audit trail, upload validation, pagination caps and query optimizations. GDPR self-service shipped: account deletion with anonymization (Art. 17) and full data export (Art. 20).
-- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (v2: KPIs, monthly trends, recent activity and receivables via the server-side `dashboard.getSummary` endpoint), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization. Android Play Store internal testing is prepared.
+- **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (v2: KPIs, monthly trends, recent activity and receivables via the server-side `dashboard.getSummary` endpoint), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization. Android packaging groundwork is in place; Play Store internal testing has not launched yet.
 - **Marketing site (`gewerber-website`)** — Jaspr SSR site live at `https://gewerber.de` with blog, FAQ, pricing and this roadmap.
 - **Open-core restructure (2026‑08)** — complete: OSS builds resolve the commercial Serverpod module against the public placeholder packages in `gewerber-backend-stubs`; insiders override locally via gitignored `pubspec_overrides.yaml`, and release CI/Docker injects the real private module with a token.
 ---
@@ -51,7 +51,7 @@ The long-term vision includes:
 The roadmap is divided into three phases of open-source deliverables.
 
 - **Phase 1** — OSS Core + MVP SaaS
-- **Phase 2** — Growth & Commercial Modules
+- **Phase 2** — Growth & Maturity
 - **Phase 3** — Expansion & Automation
 
 ---
@@ -76,7 +76,7 @@ The roadmap is divided into three phases of open-source deliverables.
 - Invoice templates ✅
 - Recurring invoices ✅
 - Payment recording & status ✅
-- Reminders ✅ (scheduled sending via SMTP)
+- Reminders ✅ (on-demand sending via SMTP)
 
 #### ⏱ Time Tracking Core
 - Projects & tasks ✅
@@ -105,14 +105,14 @@ The roadmap is divided into three phases of open-source deliverables.
 
 ---
 
-## 🟡 Phase 2 — Growth & Commercial Modules
+## 🟡 Phase 2 — Growth & Maturity
 
 ### 🌐 Open Source Deliverables
 - More invoice templates and accounting categories
 - Membership management (invite/remove members, roles)
 - Automatic dunning (Mahnung)
 - Korrekturrechnung / credit notes
-- E-invoicing support (XRechnung/ZUGFeRD) — B2B receiving already mandatory, issuing phased in 2027–2028 (mandatory from 2027 for businesses with annual revenue above €800,000; from 2028 for all)
+- E-invoicing support (XRechnung/ZUGFeRD) — receiving structured e-invoices already mandatory; issuing obligation from 2027 for businesses whose **prior-year total turnover** exceeded €800,000, from 2028 for all (Kleinunternehmer and invoices ≤ €250 exempt); accepted formats are EN 16931-conformant (XRechnung, ZUGFeRD, Peppol-BIS/Factur-X)
 - Time tracking analytics
 - Multi‑business support (OSS)
 - Community plugin system
