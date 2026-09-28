@@ -15,6 +15,8 @@ The roadmap covers the **Open Source (OSS)** track — core functionality, commu
 - **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
 - **Phase 1 / Guidance System (backend)** — done: tips, checklists and per-user progress.
+- **Phase 1 / E-Invoicing (backend)** — done in `gewerber-backend`: `invoice.exportXrechnung` emits an EN 16931-based XRechnung document in the CII syntax (type code 380; credit notes 381) with the §19 UStG Kleinunternehmer exemption (`VATEX-EU-132`); ZUGFeRD / hybrid PDF-XML is not implemented.
+- **Phase 1 / Correction invoices (backend)** — done: `invoice.createCreditNote` clones the original invoice into a signed-negative draft that is issued through the normal send flow; at most one issued credit note per original, drawing from the shared GoBD-safe invoice number sequence.
 - **Backend audit & GDPR hardening (2026‑08)** — passed a full security and quality audit: ownership checks on all business resources, invoice status guards, transactional payment recording with audit trail, upload validation, pagination caps and query optimizations. GDPR self-service shipped: account deletion with anonymization (Art. 17) and full data export (Art. 20).
 - **Flutter app (`gewerber-app`)** — one codebase for web, mobile and desktop at `https://app.gewerber.de`, localized DE/EN/RU/TR; dashboard (v2: KPIs, monthly trends, recent activity and receivables via the server-side `dashboard.getSummary` endpoint), auth & onboarding and settings are in place, and the UIs of all OSS modules are complete: responsive navigation shell, invoicing (template editor & prefill, recurring schedules, payment history), time-to-invoice billing incl. selected entries with € estimates, receipt upload & documents, transaction editing, guidance, profile management and account deletion with anonymization. Android packaging groundwork is in place; Play Store internal testing has not launched yet.
 - **Marketing site (`gewerber-website`)** — Jaspr SSR site live at `https://gewerber.de` with blog, FAQ, pricing and this roadmap.
@@ -77,6 +79,8 @@ The roadmap is divided into three phases of open-source deliverables.
 - Recurring invoices ✅
 - Payment recording & status ✅
 - Reminders ✅ (on-demand sending via SMTP)
+- XRechnung export (EN 16931 / CII) ✅
+- Correction invoices (credit notes) ✅
 
 #### ⏱ Time Tracking Core
 - Projects & tasks ✅
@@ -111,8 +115,7 @@ The roadmap is divided into three phases of open-source deliverables.
 - More invoice templates and accounting categories
 - Membership management (invite/remove members, roles)
 - Automatic dunning (Mahnung)
-- Korrekturrechnung / credit notes
-- E-invoicing support (XRechnung/ZUGFeRD) — receiving structured e-invoices already mandatory; issuing obligation from 2027 for businesses whose **prior-year total turnover** exceeded €800,000, from 2028 for all (exemptions: Kleinunternehmer under §19 UStG, invoices ≤ €250 under §34a UStDV); accepted formats must be **EN 16931**-conformant — XRechnung and ZUGFeRD are the common German syntaxes, Peppol-BIS and Factur-X are also accepted
+- E-invoicing — build on the shipped XRechnung issuance (see Current Status): planned here is ZUGFeRD / hybrid PDF-XML issuance; e-invoice receiving/validation and tax filing remain out of scope for the OSS core. Statutory context: receiving structured e-invoices already mandatory; issuing obligation from 2027 for businesses whose **prior-year total turnover** exceeded €800,000, from 2028 for all (exemptions: Kleinunternehmer under §19 UStG, invoices ≤ €250 under §34a UStDV); accepted formats must be **EN 16931**-conformant — XRechnung and ZUGFeRD are the common German syntaxes, Peppol-BIS and Factur-X are also accepted
 - Time tracking analytics
 - Multi‑business support (OSS)
 - Community plugin system

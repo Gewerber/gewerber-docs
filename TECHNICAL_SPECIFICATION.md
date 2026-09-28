@@ -52,7 +52,7 @@ Gewerber uses a **single‑language Dart stack**:
 
 *Invoicing*
 - `customer` — customer CRUD with offset-based (`listPage`, incl. total count) and keyset cursor (`listCursorPage`) pagination
-- `invoice` — invoice CRUD, items, status workflow (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`; draft-only editing, deletion restricted to drafts/cancelled), PDF generation, CSV/JSON export, same pagination options
+- `invoice` — invoice CRUD, items, status workflow (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`; draft-only editing, deletion restricted to drafts/cancelled), PDF generation, CSV/JSON export, same pagination options; `invoice.exportXrechnung` (XRechnung / EN 16931 / CII XML export) and `invoice.createCreditNote` (correction invoices / Storno-Gutschrift; server-cloned from the original, issued via `markSent`)
 - `invoiceTemplate` — reusable invoice templates (editor + invoice prefill)
 - `payment` — payment recording & payment status (transactional, overpayments rejected)
 - `recurringSchedule` — create/get/list/update/cancel recurring invoice schedules
@@ -66,7 +66,7 @@ Gewerber uses a **single‑language Dart stack**:
 - `accounting` — income/expense transactions (editable), categories, receipt upload, P&L report, CSV export
 
 *Dashboard*
-- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, credit notes excluded (compensation is a planned follow-up), open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
+- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments − issued credits)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, open invoices are compensated by their issued linked credit notes, open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
 
 *Guidance*
 - `guidance` — tips, checklists and per-user progress
@@ -132,7 +132,7 @@ All mutations require the explicit `confirm: true` flag (missing/false → typed
 - User
 - Business
 - BusinessSettings
-- Invoice *(recurring schedules are modelled as fields on the invoice)*
+- Invoice *(recurring schedules are modelled as fields on the invoice; credit notes are modelled as invoice rows via `type` (`invoice`/`creditNote`) + `originalInvoiceId`, not a separate table)*
 - InvoiceItem
 - InvoiceTemplate
 - PaymentRecord
@@ -170,6 +170,8 @@ Data models for closed modules live in private repositories and are not part of 
 - Invoice templates ✅
 - Payment recording & status ✅
 - CSV/JSON export ✅
+- XRechnung export (EN 16931 / CII) ✅
+- Correction invoices (credit notes) ✅
 - Pagination (offset & keyset cursor) ✅
 
 #### 🔒 Closed
@@ -232,15 +234,17 @@ Data models for closed modules live in private repositories and are not part of 
 
 ---
 
-### 3.8 E-Invoicing (E-Rechnung) — Planned OSS Feature
+### 3.8 E-Invoicing (E-Rechnung) — Delivered (XRechnung)
 
 Structured e-invoicing is being phased in for German B2B by law: businesses must already be able to **receive** structured e-invoices, while the obligation to **issue** them applies from 2027–2028 depending on prior-year turnover.
 
-Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invoicing module, built on the existing invoice data model (items, VAT rates, Kleinunternehmer §19 handling), so self-hosted users can stay compliant without a commercial tier.
+**Delivered in the OSS core:** `invoice.exportXrechnung` (rate-limited) serializes an invoice into an EN 16931-based XRechnung document in the CII (CrossIndustryInvoice) syntax, built on the existing invoice data model (items, VAT rates, Kleinunternehmer §19 handling), so self-hosted users can stay compliant without a commercial tier. The `XrechnungSerializer` emits the `rsm`/`ram`/`udt` namespaces, the EN 16931 guideline context, the exchanged-document header (type code `380`, `381` for credit notes), seller/buyer trade parties (name, address, VAT id / tax number identifiers), per-line items with UN/ECE Rec 20 unit codes, a per-VAT-rate breakdown and the header monetary summation; credit notes carry an `InvoiceReferencedDocument` with the original invoice number.
 
-- Planned deliverable: standards-compliant export (XRechnung CII, ZUGFeRD hybrid PDF/XML) from invoices created in Gewerber
-- Timeline aligned with the statutory issuing deadlines (2027–2028); see the [Roadmap](ROADMAP.md) (Phase 2)
-- E-invoice receiving/validation and tax-filing integrations are out of scope for the OSS core (see closed modules)
+Kleinunternehmer §19 UStG: line-level VAT is forced to the exempt category and the header carries exemption reason code `VATEX-EU-132` ("Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.").
+
+ZUGFeRD / hybrid PDF-XML (Factur-X) export is **not** implemented: only the XRechnung XML export is delivered.
+
+- E-invoice receiving/validation and tax-filing integrations remain out of scope for the OSS core (see closed modules)
 
 ---
 
