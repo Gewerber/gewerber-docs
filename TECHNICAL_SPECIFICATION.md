@@ -15,7 +15,7 @@ Gewerber uses a **single‑language Dart stack**:
 - **Database:** PostgreSQL
 - **Storage:** Database-backed document storage (S3-compatible storage planned)
 - **Open Core:** OSS modules
-- **Closed Modules:** banking, tax/ELSTER, employees, subscriptions, AI assistant
+- **Closed Modules:** banking, tax/ELSTER, employees, subscriptions, AI assistant, multi-currency invoicing, advanced accounting
 
 ---
 
@@ -46,17 +46,17 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Open Source Endpoints
 
 *Core platform & user*
-- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships; consumed by the `gewerber-mcp` user mode)
+- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships)
 - `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
 *Invoicing*
 - `customer` — customer CRUD with offset-based (`listPage`, incl. total count) and keyset cursor (`listCursorPage`) pagination
-- `invoice` — invoice CRUD, items, status workflow (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`; draft-only editing, deletion restricted to drafts/cancelled), PDF generation, CSV/JSON export, same pagination options
+- `invoice` — invoice CRUD, items, status workflow (`draft`/`sent`/`paid`/`partiallyPaid`/`overdue`/`cancelled`; draft-only editing, deletion restricted to drafts/cancelled), PDF generation, CSV/JSON export, same pagination options; `invoice.exportXrechnung` (XRechnung / EN 16931 / CII XML export) and `invoice.createCreditNote` (correction invoices / Storno-Gutschrift; server-cloned from the original, issued via `markSent`)
 - `invoiceTemplate` — reusable invoice templates (editor + invoice prefill)
 - `payment` — payment recording & payment status (transactional, overpayments rejected)
 - `recurringSchedule` — create/get/list/update/cancel recurring invoice schedules
-- `reminder` — reminders with scheduled sending via SMTP
+- `reminder` — reminders listed via `reminder.list` and sent synchronously on demand via `reminder.send` (SMTP delivery)
 - `document` — document upload (MIME type & extension whitelist)
 
 *Time tracking*
@@ -66,7 +66,7 @@ Gewerber uses a **single‑language Dart stack**:
 - `accounting` — income/expense transactions (editable), categories, receipt upload, P&L report, CSV export
 
 *Dashboard*
-- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, credit notes excluded (compensation is a planned follow-up), open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
+- `dashboard.getSummary` — aggregated dashboard summary in a single request: current-month KPIs (income/expense/profit, tracked-time minutes incl. rounding rules from BusinessSettings), monthly income/expense/profit trend (`trendMonths` 1–12, default 6), recent invoices/transactions/time entries feeds (`recentLimit` ≤ 50, default 5; project/task names resolved server-side) and a receivables summary (open & overdue invoice counts/totals, top debtors (`debtorLimit` ≤ 50, default 10), overdue invoice list (`overdueLimit` ≤ 100, default 20)); returns `DashboardSummary` (`generatedAt`, `asOf`, `trendFrom`/`trendTo`, `kpis`, `monthlyTrend`, recent lists, `receivables` with `debtors` and `overdueInvoices`); money values are integer cents (`*Cents`; `remaining` = max(0, total − payments − issued credits)); read-only — `requireLogin`, member role sufficient, tenant-scoped via `TenantResolver` (foreign `businessId` → `ForbiddenException`); v1 semantics: month buckets in UTC, half-open trend windows `[monthStart, nextMonthStart)`, open invoices = status `sent`/`partiallyPaid`/`overdue`, open invoices are compensated by their issued linked credit notes, open-invoice scan capped at the 500 oldest by due date, optional `asOf` parameter (default: now) as a test escape hatch; table-less DTOs only (no database migration), implemented in `modules/dashboard/` with ~12 constant indexed queries and no N+1
 
 *Guidance*
 - `guidance` — tips, checklists and per-user progress
@@ -79,11 +79,11 @@ Gewerber uses a **single‑language Dart stack**:
 - `adminStats` / `adminUsers` / `adminBusinesses` / `adminInvoices` / `adminAudit` / `adminGuidance` — global administration surface consumed by the open-source `gewerber-mcp` integration tooling (see Admin API below)
 
 #### 🔒 Closed Endpoints
-Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: a placeholder `commercial.status` health endpoint and the public `waitlist.join` endpoint used by the marketing site. OSS builds resolve the module against the public stub packages in `gewerber-backend-stubs` (identical API surface, no business logic); the real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository.
+Closed modules (banking/PSD2, tax/ELSTER, employees, subscriptions, AI assistant, multi-currency invoicing, advanced accounting) are implemented in the private `gewerber-backend-commercial` repository (Serverpod module, nickname `commercial`) and are not part of the public codebase. Implemented so far: the public `waitlist.join` endpoint used by the marketing site and a closed subscription & billing module (feature plans, checkout, promo codes — details intentionally out of scope here). The module is integrated as a plugin behind a minimal, documented public contract: the OSS core depends only on the module's health endpoint, the public `waitlist` API and one billing-wiring entrypoint, never on module internals. OSS builds resolve the module against the public stub packages in `gewerber-backend-stubs`, which mirror exactly that contract (no closed logic, no closed API surface); the generated OSS client is regenerated against the stubs, so the public codebase never carries closed endpoints. The real module is injected locally via gitignored `pubspec_overrides.yaml` and in release builds via token. Closed app features follow the same pattern through the `AppFeature` contract of `gewerber-app` and are composed in the private `gewerber-app-commercial` repository, whose builds pin the real (non-stub) commercial client.
 
 #### 🛡️ Admin API
 
-The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed by the open-source [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server — an MCP integration surface positioned as open integration tooling (**not** an AI assistant) that serves platform staff through these admin endpoints and end users through a separate per-user tool mode. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
+The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`, `adminInvoices`, `adminAudit`, `adminGuidance` — form a global administration surface consumed by the open-source [`gewerber-mcp`](https://github.com/Gewerber/gewerber-mcp) server — an MCP integration surface positioned as open integration tooling (**not** an AI assistant) that serves platform staff through these admin endpoints. The MCP server operates purely through these Serverpod endpoints; it has **no direct database access**. Admin authorization is independent of business membership.
 
 *Role model*
 - Global `admin_user` allowlist table with two roles: `moderator` (read-only) < `admin` (may mutate).
@@ -114,15 +114,15 @@ All mutations require the explicit `confirm: true` flag (missing/false → typed
 
 *Safety guarantees*
 - **Confirm guard** — destructive methods take an explicit `confirm` parameter; the MCP client must send `confirm: true` deliberately.
-- **Transactional auditing** — mutations record an `audit_entry` row transactionally alongside the change they describe, always with action prefix `admin.*` and the acting admin as actor.
+- **Audit trail** — mutations record an `audit_entry` row with action prefix `admin.*` and the acting admin as actor; membership-role changes and admin invoice cancellations commit the audit entry **transactionally** with the change, while ban/unban and guidance tip upsert commit it in a separate step (cross-module atomicity not available — see Known limitations).
 - **Atomic last-owner guard** — demoting the last owner of a business is refused (typed conflict error).
 - **Bans are reversible flags** — banning blocks the user on the auth level (`AuthUser.blocked`) and purges refresh tokens immediately; no user data is deleted, and unban restores sign-in.
 - **Typed errors** — failures throw generated serializable exceptions (`NotFound`, `Validation`, `Forbidden`, `Conflict`) that clients catch by type.
-- **Keyset pagination** — search/list methods use opaque cursors, default limit 50 and hard cap 200 rows per page; `auditQuery` pages newest-first via the `since` timestamp of the oldest returned entry.
+- **Keyset pagination** — search/list methods use opaque cursors, default limit 50 and hard cap 200 rows per page; `auditQuery` is the exception: it has no opaque cursor — it pages newest-first via the `since` timestamp of the oldest returned entry, filtered inclusively (`>=`), so the boundary entry repeats on the next page and clients must skip already-seen rows.
 
 *Known limitations*
 - Access JWTs issued before a ban remain valid until they expire; refresh tokens are revoked, so affected sessions cannot be renewed.
-- Ban/unban side effects live in the auth module: block flag, token purge/connection revocation and the audit entry commit separately rather than in one cross-module transaction — documented residual risk.
+- Ban/unban side effects live in the auth module: block flag, token purge/connection revocation and the audit entry commit separately rather than in one cross-module transaction — documented residual risk; guidance tip upsert likewise commits its audit entry in a separate step for the same reason.
 
 ---
 
@@ -132,7 +132,7 @@ All mutations require the explicit `confirm: true` flag (missing/false → typed
 - User
 - Business
 - BusinessSettings
-- Invoice *(recurring schedules are modelled as fields on the invoice)*
+- Invoice *(recurring schedules are modelled as fields on the invoice; credit notes are modelled as invoice rows via `type` (`invoice`/`creditNote`) + `originalInvoiceId`, not a separate table)*
 - InvoiceItem
 - InvoiceTemplate
 - PaymentRecord
@@ -166,14 +166,16 @@ Data models for closed modules live in private repositories and are not part of 
 - PDF generation ✅
 - VAT/Kleinunternehmer §19 logic ✅
 - Recurring invoices ✅
-- Reminders ✅ (scheduled sending via SMTP)
+- Reminders ✅ (on-demand sending via SMTP)
 - Invoice templates ✅
 - Payment recording & status ✅
 - CSV/JSON export ✅
+- XRechnung export (EN 16931 / CII) ✅
+- Correction invoices (credit notes) ✅
 - Pagination (offset & keyset cursor) ✅
 
 #### 🔒 Closed
-- Online payments (Stripe)
+- Online payments
 - Multi-currency invoicing
 - Banking reconciliation
 
@@ -193,7 +195,7 @@ Data models for closed modules live in private repositories and are not part of 
 
 #### 🌐 Open Source
 - Income/expense tracking
-- Receipt upload
+- Receipt linking (files uploaded via the document module, linked by `receiptDocumentId`)
 - Categorization
 - Basic P&L
 - Export
@@ -232,15 +234,17 @@ Data models for closed modules live in private repositories and are not part of 
 
 ---
 
-### 3.8 E-Invoicing (E-Rechnung) — Planned OSS Feature
+### 3.8 E-Invoicing (E-Rechnung) — Delivered (XRechnung)
 
 Structured e-invoicing is being phased in for German B2B by law: businesses must already be able to **receive** structured e-invoices, while the obligation to **issue** them applies from 2027–2028 depending on prior-year turnover.
 
-Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invoicing module, built on the existing invoice data model (items, VAT rates, Kleinunternehmer §19 handling), so self-hosted users can stay compliant without a commercial tier.
+**Delivered in the OSS core:** `invoice.exportXrechnung` (rate-limited) serializes an invoice into an EN 16931-based XRechnung document in the CII (CrossIndustryInvoice) syntax, built on the existing invoice data model (items, VAT rates, Kleinunternehmer §19 handling), so self-hosted users can stay compliant without a commercial tier. The `XrechnungSerializer` emits the `rsm`/`ram`/`udt` namespaces, the EN 16931 guideline context, the exchanged-document header (type code `380`, `381` for credit notes), seller/buyer trade parties (name, address, VAT id / tax number identifiers), per-line items with UN/ECE Rec 20 unit codes, a per-VAT-rate breakdown and the header monetary summation; credit notes carry an `InvoiceReferencedDocument` with the original invoice number.
 
-- Planned deliverable: standards-compliant export (XRechnung CII, ZUGFeRD hybrid PDF/XML) from invoices created in Gewerber
-- Timeline aligned with the statutory issuing deadlines (2027–2028); see the [Roadmap](ROADMAP.md) (Phase 2)
-- E-invoice receiving/validation and tax-filing integrations are out of scope for the OSS core (see closed modules)
+Kleinunternehmer §19 UStG: line-level VAT is forced to the exempt category and the header carries exemption reason code `VATEX-EU-132` ("Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.").
+
+ZUGFeRD / hybrid PDF-XML (Factur-X) export is **not** implemented: only the XRechnung XML export is delivered.
+
+- E-invoice receiving/validation and tax-filing integrations remain out of scope for the OSS core (see closed modules)
 
 ---
 
@@ -250,7 +254,7 @@ Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invo
 - Invoice status guards (draft-only editing, restricted deletion)
 - Upload validation (MIME type & extension whitelist)
 - GDPR compliance — self-service account deletion with anonymization (Art. 17) and full data export (Art. 20)
-- Audit logs written transactionally alongside the business changes they record
+- Audit entries recorded for every admin mutation — transactional where feasible (see Admin API safety guarantees)
 - Role‑based access control
 - Encrypted fields *(planned)*
 
@@ -272,6 +276,8 @@ Gewerber will add **XRechnung/ZUGFeRD e-invoice export** to the open-source invo
 - Employees
 - Subscriptions
 - AI assistant
+- Multi-currency invoicing
+- Advanced accounting
 
 ---
 
