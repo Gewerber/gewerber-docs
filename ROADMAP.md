@@ -10,7 +10,7 @@ The roadmap covers the **Open Source (OSS)** track — core functionality, commu
 
 ## ✅ Current Status
 
-- **Phase 1 / Core Platform (backend)** — done in `gewerber-backend`: Serverpod backend with JWT auth (email IdP), business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
+- **Phase 1 / Core Platform (backend)** — done in `gewerber-backend`: Serverpod backend with email/JWT auth (email IdP) plus optional Google, Apple, Facebook and Microsoft social sign-in, business profile & onboarding, multi-tenancy (tenant resolver), audit log, entitlement scaffold, mail service and GoBD-safe number sequences.
 - **Phase 1 / Invoicing Core (backend)** — done: Customer & Invoice CRUD, invoice items, VAT/Kleinunternehmer §19 logic (tax rule engine), invoice templates, PDF generation, payment recording & status (`paid`/`partiallyPaid`), recurring invoices and reminders (background jobs materialize recurring invoices and mark overdue; reminder emails sent on demand via SMTP), CSV/JSON export.
 - **Phase 1 / Time Tracking Core (backend)** — done: projects & tasks, timer, manual entries, rounding rules, reports and time-to-invoice billing.
 - **Phase 1 / Basic Accounting Core (backend)** — done: income & expense transactions, categories, receipt upload (document storage), P&L report, CSV export.
@@ -67,7 +67,7 @@ The roadmap is divided into three phases of open-source deliverables.
 - Flutter Web app at `https://app.gewerber.de` ✅
 - Jaspr marketing site at `https://gewerber.de` ✅
 - Multi-language UI (DE/EN/RU/TR) ✅
-- Basic auth & business profile ✅ (JWT auth, business profile, multi-tenancy)
+- Basic auth & business profile ✅ (email/JWT auth, optional Google/Apple/Facebook/Microsoft sign-in, business profile, multi-tenancy)
 
 #### 💰 Invoicing Core
 - Invoice creation ✅

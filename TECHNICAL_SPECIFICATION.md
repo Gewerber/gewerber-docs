@@ -46,7 +46,7 @@ Gewerber uses a **single‑language Dart stack**:
 #### 🌐 Open Source Endpoints
 
 *Core platform & user*
-- `auth` / `userProfile` — JWT email/password sign-in, refresh, profile management, email verification (8-digit codes), identity discovery (`userProfile.me` returns the caller's global admin role (if any) and business memberships)
+- `auth` / `userProfile` — email/password sign-in with JWT (refresh, email verification via 8-digit codes) plus optional social identity providers (Google, Apple, Facebook, Microsoft); profile management; identity discovery (`userProfile.me` returns the caller's global admin role (if any), business memberships, the caller's primary email address and the providers connected to the account)
 - `business` / `businessSettings` — business profile & settings (multi-tenant)
 - `entitlement` — subscription feature gating
 
@@ -72,7 +72,7 @@ Gewerber uses a **single‑language Dart stack**:
 - `guidance` — tips, checklists and per-user progress
 
 *GDPR self-service*
-- `userProfile.deleteMyAccount` — account deletion with anonymization of personal references (GDPR Art. 17)
+- `userProfile.deleteMyAccount` — account deletion with anonymization of personal references (GDPR Art. 17); all identity-provider rows and refresh tokens are purged, while the `AuthUser` row and the profile tombstone remain
 - `userProfile.exportMyData` — full data export as a downloadable archive (GDPR Art. 20)
 
 *Administration*
@@ -95,9 +95,9 @@ The `modules/admin` endpoints — `adminStats`, `adminUsers`, `adminBusinesses`,
 | Endpoint | Method | Key parameters | Min role |
 |---|---|---|---|
 | `adminStats` | `statsOverview` | platform-wide counters | moderator |
-| `adminUsers` | `usersSearch` | `query` (email substring), `limit`, `cursor` | moderator |
-| | `usersGet` | `userId` — full dossier (profile, memberships, auth status) | moderator |
-| | `usersVerifyEmail` | `userId` — read-only verification-state compliance check (audited) | admin |
+| `adminUsers` | `usersSearch` | `query` (email substring; matches across all identity-provider tables), `limit`, `cursor` | moderator |
+| | `usersGet` | `userId` — full dossier (profile, memberships, auth state: resolved primary address and connected providers) | moderator |
+| | `usersVerifyEmail` | `userId` — read-only verification-state compliance check, provider-agnostic (audited) | admin |
 | | `usersBan` | `userId`, required `reason`, **`confirm`** | admin |
 | | `usersUnban` | `userId`, **`confirm`** | admin |
 | `adminBusinesses` | `businessesSearch` | `query` (name substring), `limit`, `cursor` | moderator |
@@ -130,6 +130,7 @@ All mutations require the explicit `confirm: true` flag (missing/false → typed
 
 #### 🌐 Entities (Open Source)
 - User
+- User identity providers (Google / Apple / Facebook / Microsoft) — optional sign-in identities
 - Business
 - BusinessSettings
 - Invoice *(recurring schedules are modelled as fields on the invoice; credit notes are modelled as invoice rows via `type` (`invoice`/`creditNote`) + `originalInvoiceId`, not a separate table)*
@@ -152,10 +153,54 @@ Data models for closed modules live in private repositories and are not part of 
 ## 3️⃣ Module Architecture
 
 ### 3.1 User & Business Module
-- Auth (JWT)
+- Auth (email/password + optional social identity providers)
 - Business profile
 - Multi‑language
 - Multi‑business (future)
+
+#### 🌐 Social sign-in (optional, OSS)
+
+Email/password with JWT remains the default identity provider. Google, Apple,
+Facebook and Microsoft are **optional** providers layered on top of it. A
+provider is enabled only when **all** its keys are present in the run-mode
+section of `config/passwords.yaml`; otherwise it is disabled and the server
+still boots, logging one line per provider at startup, e.g.
+`[auth] google: disabled (missing googleClientSecret)`. The provider identity
+tables already exist in the schema; no migration is required to enable a
+provider.
+
+- **Native vs. web flow** — native (mobile/desktop) clients authenticate through
+  the provider's app/browser flow via `flutter_web_auth_2`. On web the callback
+  page must be served from the **same origin** as the Flutter app: browsers only
+  deliver the OAuth result `postMessage` when the callback page and the app share
+  scheme + host + port, so the app uses `flutter_web_auth_2`'s `auth.html` on
+  web while native uses the backend route.
+- **Callback paths** — `/auth/callback` is the generic PKCE callback (Google,
+  Microsoft); Apple uses `/auth/apple/callback` plus `/auth/apple/revoked` for
+  server-to-server consent-revoked / account-deleted notifications. These are
+  served by the Serverpod **web server** (container port `8082`), not the API
+  server, and routed by Traefik under `/auth/` on the API host so the public
+  origin stays the same host as the API.
+- **Identity discovery** — `userProfile.me()` returns `primaryEmail` (the
+  caller's primary address resolved from the email IdP → Google → Apple →
+  Microsoft → Facebook) and `connectedProviders` (the providers with an identity
+  row for that user). This exists because `AuthSuccess` carries no email, so the
+  caller cannot otherwise learn its own address after a provider sign-in.
+- **Provider-agnostic admin** — directory search spans all five identity tables;
+  auth state reports the resolved address and connected providers; email
+  verification no longer assumes an email/password account.
+- **Account deletion** purges all identity rows and refresh tokens; the
+  `AuthUser` row and the profile tombstone remain.
+
+**Phase-1 limitation — sign-in only, no account linking.** A provider sign-in
+whose verified email already belongs to an email/password account can create a
+**second** `AuthUser` with no memberships and no access to the first account's
+data. Linking existing accounts to a provider is planned as a follow-up; until
+then a user who signs in with a provider and with email/password may end up with
+two separate accounts.
+
+In the app, social buttons are rendered only for providers that are both
+configured and available on the running platform.
 
 ---
 
@@ -249,7 +294,7 @@ ZUGFeRD / hybrid PDF-XML (Factur-X) export is **not** implemented: only the XRec
 ---
 
 ## 4️⃣ Security
-- JWT auth
+- JWT auth (email/password IdP plus optional Google, Apple, Facebook and Microsoft identity providers; sign-in only, no account linking)
 - Resource ownership checks on all business data (IDOR protection)
 - Invoice status guards (draft-only editing, restricted deletion)
 - Upload validation (MIME type & extension whitelist)
